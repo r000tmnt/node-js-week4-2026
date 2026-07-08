@@ -30,7 +30,7 @@ const router = express.Router();
 //   3. 加密完成後，將新使用者（包含 id、email、加密後 password）存進 users，並 return 201 跟對應輸出訊息
 // - 注意：handler 是 async function
 /* 作答區 */
-router.METHOD('PATH', async (req, res) => { 
+router.post('/register', async (req, res) => { 
     try {
         if(req.body.email === undefined){
             res.status(400).json({ status: 'false', message: '缺少 email' })
@@ -77,7 +77,7 @@ router.METHOD('PATH', async (req, res) => {
 //   4. token 簽出後，回應 200 跟對應輸出訊息
 // - 注意：handler 是 async function
 /* 作答區 */
-router.METHOD('PATH', async (req, res) => { 
+router.post('/login', async (req, res) => { 
     try {
         if(req.body.email === undefined){
             res.status(400).json({ status: 'false', message: '缺少 email' })
@@ -121,8 +121,22 @@ router.METHOD('PATH', async (req, res) => {
 // GET /me
 // - 保護：路由第二個參數掛上 verifyToken 守門員（驗過後會將使用者資料掛到 req.user）
 // - 輸出：200 + { status: 'success', user: ... }
-/* 作答區
-router.METHOD('PATH', middleware, (req, res) => { ... });
-*/
+/* 作答區 */
+router.get('/me', verifyToken, (req, res) => { 
+    try {
+        const { user } = req
+
+        const userExist = users.find(u => u.email === user.email)
+
+        if(userExist){
+            res.status(200).json({ status: 'success', user: userExist })
+        }else{
+            res.status(400).json({ status: 'false', message: '找不到使用者' })
+        }        
+    } catch (error) {
+        res.status(400).json({ status: 'false', message: String(error) })
+    }
+ });
+
 
 module.exports = router;
