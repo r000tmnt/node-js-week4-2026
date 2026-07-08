@@ -29,9 +29,39 @@ const router = express.Router();
 //   2. 密碼加密可使用 bcrypt 的 genSalt 與 hash 
 //   3. 加密完成後，將新使用者（包含 id、email、加密後 password）存進 users，並 return 201 跟對應輸出訊息
 // - 注意：handler 是 async function
-/* 作答區
-router.METHOD('PATH', async (req, res) => { ... });
-*/
+/* 作答區 */
+router.METHOD('PATH', async (req, res) => { 
+    try {
+        if(req.body.email === undefined){
+            res.status(400).json({ status: 'false', message: '缺少 email' })
+        }
+
+        if(req.body.password === undefined){
+            res.status(400).json({ status: 'false', message: '缺少 password' })
+        }
+
+        if(users.findIndex(u => u.email === req.body.email) < 0){
+            res.status(400).json({ status: 'false', message: '這個 email 已經註冊過' })
+        }
+
+        const salt = bcrypt.genSalt()
+
+        const crypt = bcrypt.hash(req.body.password, salt)
+
+        users.push({
+            id: nextId,
+            email: req.body.email,
+            password: crypt
+        })
+
+        nextId += 1
+
+        res.status(201).json({ status: 'success', message: '註冊成功' })
+    } catch (error) {
+        res.status(400).json({ status: 'false', message: String(error) })
+    }
+ });
+
 
 // ───────────────────────────────────────────────────────────
 // TODO 任務三：POST /login
