@@ -23,6 +23,7 @@ const verifyToken = function (req, res, next) {
   /* 作答區 */
   if(req.headers.authorization && !req.headers.authorization.includes('Bearer')){
     res.status(401).json({ status: 'false', message: '請先登入' })
+    return
   }
 
   try {

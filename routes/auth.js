@@ -32,16 +32,14 @@ const router = express.Router();
 /* 作答區 */
 router.post('/register', async (req, res) => { 
     try {
-        if(req.body.email === undefined){
-            res.status(400).json({ status: 'false', message: '缺少 email' })
+        if(req.body.email === undefined || req.body.password === undefined){
+            res.status(400).json({ status: 'false', message: '缺少 email 或 password' })
+            return
         }
 
-        if(req.body.password === undefined){
-            res.status(400).json({ status: 'false', message: '缺少 password' })
-        }
-
-        if(users.findIndex(u => u.email === req.body.email) < 0){
-            res.status(400).json({ status: 'false', message: '這個 email 已經註冊過' })
+        if(users.findIndex(u => u.email === req.body.email) >= 0){
+            res.status(400).json({ status: 'false', message: '這個 email 已經註冊' })
+            return
         }
 
         const salt = await bcrypt.genSalt()
@@ -58,7 +56,7 @@ router.post('/register', async (req, res) => {
 
         res.status(201).json({ status: 'success', message: '註冊成功' })
     } catch (error) {
-        res.status(400).json({ status: 'false', message: String(error) })
+        return error
     }
  });
 
@@ -79,37 +77,36 @@ router.post('/register', async (req, res) => {
 /* 作答區 */
 router.post('/login', async (req, res) => { 
     try {
-        if(req.body.email === undefined){
-            res.status(400).json({ status: 'false', message: '缺少 email' })
-        }
+        // console.log(req.body)
 
-        if(req.body.password === undefined){
-            res.status(400).json({ status: 'false', message: '缺少 password' })
+        if(req.body.email === undefined || req.body.password === undefined){
+            res.status(401).json({ status: 'false', message: '缺少 email 或 password' })
+            return
         }
 
         const user = users.find(u => u.email === req.body.email)
 
-        const salt = await bcrypt.genSalt()
+        const valid = await bcrypt.compare(req.body.password, user?.password?? '')
 
-        const crypt = await bcrypt.hash(req.body.password, salt)
+        // console.log(req.body, user)
 
-        if(user === undefined || crypt !== user.password){
+        if(user === undefined || !valid){
             res.status(401).json({ status: 'false', message: '帳號或密碼錯誤' })
+            return
         }
 
-        jwt.sign({
+        const encoded = await jwt.sign({
             id: user.id,
             email: user.email
         }, process.env.JWT_SECRET, 
         {
             expiresIn: '30d',
-        }, (err, encoded) => {
-            if(err) return err
-
-            res.status(200).json({ status: 'success', token: encoded, message: '登入成功' })
         })
+
+        res.status(200).json({ status: 'success', token: encoded, message: '登入成功' })
     } catch (error) {
-        res.status(400).json({ status: 'false', message: String(error) })
+        console.log(error)
+        return error
     }
  });
 
@@ -134,7 +131,7 @@ router.get('/me', verifyToken, (req, res) => {
             res.status(400).json({ status: 'false', message: '找不到使用者' })
         }        
     } catch (error) {
-        res.status(400).json({ status: 'false', message: String(error) })
+        return error
     }
  });
 
