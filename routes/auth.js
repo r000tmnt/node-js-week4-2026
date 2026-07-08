@@ -76,9 +76,43 @@ router.METHOD('PATH', async (req, res) => {
 //   3. 用 jwt.sign 簽出 token，payload 帶入使用者的 id 和 email，secret 使用 process.env.JWT_SECRET，有效期設為 30 天
 //   4. token 簽出後，回應 200 跟對應輸出訊息
 // - 注意：handler 是 async function
-/* 作答區
-router.METHOD('PATH', async (req, res) => { ... });
-*/
+/* 作答區 */
+router.METHOD('PATH', async (req, res) => { 
+    try {
+        if(req.body.email === undefined){
+            res.status(400).json({ status: 'false', message: '缺少 email' })
+        }
+
+        if(req.body.password === undefined){
+            res.status(400).json({ status: 'false', message: '缺少 password' })
+        }
+
+        const user = users.find(u => u.email === req.body.email)
+
+        const salt = await bcrypt.genSalt()
+
+        const crypt = await bcrypt.hash(req.body.password, salt)
+
+        if(user === undefined || crypt !== user.password){
+            res.status(401).json({ status: 'false', message: '帳號或密碼錯誤' })
+        }
+
+        jwt.sign({
+            id: user.id,
+            email: user.email
+        }, process.env.JWT_SECRET, 
+        {
+            expiresIn: '30d',
+        }, (err, encoded) => {
+            if(err) return err
+
+            res.status(200).json({ status: 'success', token: encoded, message: '登入成功' })
+        })
+    } catch (error) {
+        res.status(400).json({ status: 'false', message: String(error) })
+    }
+ });
+
 
 // ───────────────────────────────────────────────────────────
 // TODO 任務四：GET /me（受保護）
