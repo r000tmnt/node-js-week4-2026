@@ -44,9 +44,9 @@ router.METHOD('PATH', async (req, res) => {
             res.status(400).json({ status: 'false', message: '這個 email 已經註冊過' })
         }
 
-        const salt = bcrypt.genSalt()
+        const salt = await bcrypt.genSalt()
 
-        const crypt = bcrypt.hash(req.body.password, salt)
+        const crypt = await bcrypt.hash(req.body.password, salt)
 
         users.push({
             id: nextId,
