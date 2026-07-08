@@ -29,12 +29,14 @@ app.use('/auth', authRouter)
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 app.use((req, res, next) => {
-  res.status(404).send("Sorry can't find that!");
+    const err = { code: 404 }
+    next(err)
 });
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ err, message: 'Something went wrong.' });
+//   console.error(err);
+    const statusCode = err.code || 500
+    res.status(statusCode).json({ err: 'SyntaxError', message: 'Something went wrong.' });
 });
 
 module.exports = app;
